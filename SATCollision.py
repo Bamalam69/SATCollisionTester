@@ -6,10 +6,13 @@ class BoundingBox:
         self.height = height
 
     def intersects_with(self, other):
+        if not isinstance(other, BoundingBox):
+            raise TypeError("Incorrect type for parameter 'other'. Expected a BoundingBox not:" + type(other).__name__)
+
         return self.x < other.x + other.width \
-               and self.x + self.width > other.x \
-               and self.y < other.y + other.height \
-               and self.y + self.height > other.y
+            and self.x + self.width > other.x \
+            and self.y < other.y + other.height \
+            and self.y + self.height > other.y
 
 
 class SATResult:
