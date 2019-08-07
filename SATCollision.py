@@ -16,7 +16,8 @@ class IntersectTester:
         :param pol1: 1 of 2 polygons that a collision will be tested for.
         :param pol2: 1 of 2 polygons that a collision will be tested for.
         """
-        pass
+        self.pol1 = pol1
+        self.pol2 = pol2
 
     def test_minor(self):
         """
@@ -24,7 +25,9 @@ class IntersectTester:
         information about the intersection as a single axis-aligned bounding box check
         is not very accurate.
         """
-        pass
+        bounds1 = BoundingBox.generate_bounds_from(self.pol1)
+        bounds2 = BoundingBox.generate_bounds_from(self.pol2)
+        return bounds1.intersects_with(bounds2)
 
     def test_major(self):
         """
@@ -86,13 +89,69 @@ class BoundingBox:
             and self.y + self.height > other.y
 
     @staticmethod
-    def generate_bounds(pol1):
+    def generate_bounds_from(pol1):
         """
         Creates a bounding box from the inputted polygon.
         :param pol1: The polygon represented by list of vertices.
-        :return: An axis-aligned bounding box of the provided shape.
+        :return: An axis-aligned bounding box from the provided shape.
         """
-        pass
+        min_vec = Vector2(9999999, 999999)
+        max_vec = Vector2(-9999999, -99999999)
+        for vertex in pol1:
+            if vertex.x > max_vec.x:
+                max_vec.x = vertex.x
+            if vertex.x <= min_vec.x:
+                min_vec.x = vertex.x
+
+            if vertex.y > max_vec.y:
+                max_vec.y = vertex.y
+            if vertex.y <= min_vec.y:
+                min_vec.y = vertex.y
+
+        return BoundingBox(min_vec.y, min_vec.y, max_vec.x - min_vec.x, max_vec.y - min_vec.y)
+
+
+class Vector2:
+    def __init__(self, x, y):
+        """
+        Initializes a new Vector2
+        :param x: The x coordinate
+        :param y: The y coordinate
+        """
+        self.x = x
+        self.y = y
+
+    def magnitude(self):
+        """
+        Returns the magnitude of the vector.
+        :return:
+        """
+        from math import sqrt
+        return sqrt((self.x * self.x) + (self.y + self.y))
+
+    def normalized(self):
+        """
+        Returns the unit vector of itself.
+        :return:
+        """
+        return self / self.magnitude()
+
+    # Operator overloads...
+    # Division
+    def __truediv__(self, scalar):
+        return Vector2(self.x / scalar, self.y / scalar)
+
+    # Multiplication
+    def __mul__(self, scalar):
+        return Vector2(self.x * scalar, self.y * scalar)
+
+    # Addition
+    def __add__(self, other):
+        return Vector2(self.x + other.x, self.y + other.y)
+
+    # Subtraction
+    def __sub__(self, other):
+        return Vector2(self.x - other.x, self.y - other.y)
 
 
 class IntersectResult:
