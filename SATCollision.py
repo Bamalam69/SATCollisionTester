@@ -1,8 +1,22 @@
 """
 This module is to be used for determining whether or
 not an intersection between
-two convex shapes are occuring......
+two convex shapes are occurring......
 """
+from typing import List
+
+
+class ShapeProjection:
+    """
+    Projection of 2D polygon into 1D.
+    """
+    def __init__(self, minimum, maximum):
+        self.minimum = minimum
+        self.maximum = maximum
+
+    def overlaps(self, other):
+        return max(self.minimum, self.maximum) >= min(other.minimum, other.maximum) and \
+               max(other.minimum, other.maximum) >= min(self.minimum, self.maximum)
 
 
 class IntersectTester:
@@ -37,7 +51,21 @@ class IntersectTester:
         it will inform you of the possibility of a current intersection between the two shapes.
         :return:
         """
-        pass
+        normals1 = IntersectTester._get_normals_from(self.pol1)
+        normals2 = IntersectTester._get_normals_from(self.pol2)
+        normals = normals1 + normals2
+
+        for normal in normals:
+            p1 = IntersectTester.projection_from_onto(self.pol1, normal)
+            p2 = IntersectTester.projection_from_onto(self.pol2, normal)
+
+            if not p1.overlaps(p2):
+                # No Intersection. Quit algorithm right away.
+                return False
+
+        # If execution gets to this point, the algorithm did not return and thus there is an intersection
+        # between the two shapes.
+        return True
 
     def test_full(self):
         """
@@ -47,12 +75,49 @@ class IntersectTester:
         between the two polygons.
         :return:
         """
-        pass
+        bounds_is_intersecting = self.test_minor()
+        if bounds_is_intersecting:
+            return self.test_major()
+        return False
+
+    @staticmethod
+    def _get_normals_from(polygon):
+        normals: List[Vector2] = []
+        for i in range(len(polygon)):
+            vertexVector1 = Vector2.from_tuple(polygon[i])
+            if i + 1 == len(polygon):
+                return normals
+                #vertexVector2 = Vector2.from_tuple(polygon[0])
+            else:
+                vertexVector2 = Vector2.from_tuple(polygon[i + 1])
+            edge = vertexVector1 - vertexVector2
+            normals.append(edge.get_perpendicular())
+        return normals
+
+    @staticmethod
+    def projection_from_onto(pol1, axis):
+        """
+        Makes a Projection of the inputted shape onto the
+        provided axis.
+        :param pol1: The 2D polygon to be projected.
+        :param axis: The Axis to project the polygon onto.
+        :return: A ShapeProjection.
+        """
+        minimum = 9999999
+        maximum = -9999999
+        for vertex in pol1:
+            vecVertex = Vector2.from_tuple(vertex)
+            p = Vector2.dot_product(axis, vecVertex)
+            if p < minimum:
+                minimum = p
+            elif p > maximum:
+                maximum = p
+        return ShapeProjection(minimum, maximum)
 
 
 class BoundingBox:
     """
-    Represents an axis-aligned BoundingBox.
+    Represents an axis-aligned BoundingBox - AABB.
     Consists of an x and a y coordinate representing the top
     left corner of the box, and a width and height
     value for the width and height of the bounding box.
@@ -79,7 +144,7 @@ class BoundingBox:
         :return: A boolean - true for an intersection.
         """
         # Type checking to throw an error if the user inputted something other than a BoundingBox
-        # otherwise Python will throw it's own vague error when the AABB intersection check is performed.
+        # otherwise Python will throw it's own vague error.
         if not isinstance(other, BoundingBox):
             raise TypeError("Incorrect type for parameter 'other'. Expected a BoundingBox not:" + type(other).__name__)
 
@@ -95,18 +160,19 @@ class BoundingBox:
         :param pol1: The polygon represented by list of vertices.
         :return: An axis-aligned bounding box from the provided shape.
         """
-        min_vec = Vector2(9999999, 999999)
+        min_vec = Vector2(9999999, 99999999)
         max_vec = Vector2(-9999999, -99999999)
         for vertex in pol1:
-            if vertex.x > max_vec.x:
-                max_vec.x = vertex.x
-            if vertex.x <= min_vec.x:
-                min_vec.x = vertex.x
+            vector_vertex = Vector2.from_tuple(vertex)
+            if vector_vertex.x > max_vec.x:
+                max_vec.x = vector_vertex.x
+            if vector_vertex.x <= min_vec.x:
+                min_vec.x = vector_vertex.x
 
-            if vertex.y > max_vec.y:
-                max_vec.y = vertex.y
-            if vertex.y <= min_vec.y:
-                min_vec.y = vertex.y
+            if vector_vertex.y > max_vec.y:
+                max_vec.y = vector_vertex.y
+            if vector_vertex.y <= min_vec.y:
+                min_vec.y = vector_vertex.y
 
         return BoundingBox(min_vec.y, min_vec.y, max_vec.x - min_vec.x, max_vec.y - min_vec.y)
 
@@ -121,6 +187,9 @@ class Vector2:
         self.x = x
         self.y = y
 
+    def __repr__(self):
+        return "(" + str(self.x) + ", " + str(self.y) + ")"
+
     def magnitude(self):
         """
         Returns the magnitude of the vector.
@@ -131,8 +200,7 @@ class Vector2:
 
     def normalized(self):
         """
-        Returns the unit vector of itself.
-        :return:
+        :return: Returns the unit vector of itself.
         """
         return self / self.magnitude()
 
@@ -153,6 +221,29 @@ class Vector2:
     def __sub__(self, other):
         return Vector2(self.x - other.x, self.y - other.y)
 
+    @staticmethod
+    def from_tuple(vertex):
+        """
+        Converts the inputted vertex from a tuple to a Vector2. If the inputted vertex
+        is already a Vector2, the function will just return the inputted Vector2.
+        If the inputted vertex is not a Vector2 or a tuple, the method will raise a TypeError.
+        :param vertex: The tuple to be converted.
+        :return: Returns a Vector2 representation of the tuple.
+        """
+        if isinstance(vertex, Vector2):
+            return vertex
+        elif isinstance(vertex, tuple):
+            return Vector2(vertex[0], vertex[1])
+        else:
+            raise TypeError("Inputted vertex is not a tuple or Vector2! Expected: tuple | Vector2 got: " + type(vertex).__name__)
+
+    @staticmethod
+    def dot_product(left, right):
+        return left.x * right.x + left.y * right.y
+
+    def get_perpendicular(self):
+        return Vector2(self.y, -self.x)
+
 
 class IntersectResult:
     """
@@ -161,7 +252,7 @@ class IntersectResult:
     and the MTV - Minimum Translation Vector - for moving the shapes out of each other.
     """
     def __init__(self, intersection, mtv):
-        """"
+        """
         Spawns a IntersectResult instance using the provided intersection boolean
         and mtv vector.
         :param intersection:
