@@ -1,22 +1,8 @@
 """
-This module is to be used for determining whether or
-not an intersection between
-two convex shapes are occurring......
+A module for determining whether or
+not an intersection between two convex shapes are occurring.
 """
 from typing import List
-
-
-class ShapeProjection:
-    """
-    Projection of 2D polygon into 1D.
-    """
-    def __init__(self, minimum, maximum):
-        self.minimum = minimum
-        self.maximum = maximum
-
-    def overlaps(self, other):
-        return max(self.minimum, self.maximum) >= min(other.minimum, other.maximum) and \
-               max(other.minimum, other.maximum) >= min(self.minimum, self.maximum)
 
 
 class IntersectTester:
@@ -61,11 +47,11 @@ class IntersectTester:
 
             if not p1.overlaps(p2):
                 # No Intersection. Quit algorithm right away.
-                return False
+                return IntersectResult(False, None)
 
         # If execution gets to this point, the algorithm did not return and thus there is an intersection
         # between the two shapes.
-        return True
+        return IntersectResult(True, None)
 
     def test_full(self):
         """
@@ -73,7 +59,6 @@ class IntersectTester:
         given polygons inputted when this instance was spawned.
         :return: IntersectResult containing information representing whether there is an intersection
         between the two polygons.
-        :return:
         """
         bounds_is_intersecting = self.test_minor()
         if bounds_is_intersecting:
@@ -82,12 +67,15 @@ class IntersectTester:
 
     @staticmethod
     def _get_normals_from(polygon):
-        normals: List[Vector2] = []
+        """
+        :param polygon: The polygon to get edge normals from.
+        :return: Retrieves the edge normals of the provided convex polygon.
+        """
+        normals: List[Vector2] = []  # List hint...
         for i in range(len(polygon)):
             vertexVector1 = Vector2.from_tuple(polygon[i])
             if i + 1 == len(polygon):
                 return normals
-                #vertexVector2 = Vector2.from_tuple(polygon[0])
             else:
                 vertexVector2 = Vector2.from_tuple(polygon[i + 1])
             edge = vertexVector1 - vertexVector2
@@ -136,6 +124,13 @@ class BoundingBox:
         self.width = width
         self.height = height
 
+    def __repr__(self):
+        return "Bounding Box(X: " + str(self.x) + " Y: " + str(self.y) + " Width: " + str(self.width) + \
+               " Height: " + str(self.height) + ")"
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y and self.height == other.height and self.width == other.width
+
     def intersects_with(self, other):
         """
         Checks for an intersection between itself and the other provided bounding box.
@@ -146,7 +141,7 @@ class BoundingBox:
         # Type checking to throw an error if the user inputted something other than a BoundingBox
         # otherwise Python will throw it's own vague error.
         if not isinstance(other, BoundingBox):
-            raise TypeError("Incorrect type for parameter 'other'. Expected a BoundingBox not:" + type(other).__name__)
+            raise TypeError("Incorrect type for parameter 'other'. Expected a BoundingBox not: " + type(other).__name__)
 
         return self.x < other.x + other.width \
             and self.x + self.width > other.x \
@@ -190,6 +185,38 @@ class Vector2:
     def __repr__(self):
         return "(" + str(self.x) + ", " + str(self.y) + ")"
 
+    # Operator overloads...
+    # Division
+    def __truediv__(self, scalar):
+        """
+        :return: Division between Vector2 and scalar. Vector2(1, 1) / 2.0 = Vector2(0.5, 0.5)
+        """
+        return Vector2(self.x / scalar, self.y / scalar)
+
+    # Multiplication
+    def __mul__(self, scalar):
+        """
+        :return: Vector2 multiplied by scalar. Vector2(1, 1) * 2 = Vector2(2, 2)
+        """
+        return Vector2(self.x * scalar, self.y * scalar)
+
+    # Addition
+    def __add__(self, other):
+        """
+        :return: Vector2(2, 2) + Vector2(2, 2) = Vector2(4, 4)
+        """
+        return Vector2(self.x + other.x, self.y + other.y)
+
+    # Subtraction
+    def __sub__(self, other):
+        """
+        :return: Vector2(5, 5) - Vector2(2, 3) = Vector2(3, 2)
+        """
+        return Vector2(self.x - other.x, self.y - other.y)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
     def magnitude(self):
         """
         Returns the magnitude of the vector.
@@ -203,23 +230,6 @@ class Vector2:
         :return: Returns the unit vector of itself.
         """
         return self / self.magnitude()
-
-    # Operator overloads...
-    # Division
-    def __truediv__(self, scalar):
-        return Vector2(self.x / scalar, self.y / scalar)
-
-    # Multiplication
-    def __mul__(self, scalar):
-        return Vector2(self.x * scalar, self.y * scalar)
-
-    # Addition
-    def __add__(self, other):
-        return Vector2(self.x + other.x, self.y + other.y)
-
-    # Subtraction
-    def __sub__(self, other):
-        return Vector2(self.x - other.x, self.y - other.y)
 
     @staticmethod
     def from_tuple(vertex):
@@ -235,14 +245,46 @@ class Vector2:
         elif isinstance(vertex, tuple):
             return Vector2(vertex[0], vertex[1])
         else:
-            raise TypeError("Inputted vertex is not a tuple or Vector2! Expected: tuple | Vector2 got: " + type(vertex).__name__)
+            raise TypeError("Inputted vertex is not a tuple or Vector2! Expected: tuple | Vector2 got: " +
+                            type(vertex).__name__)
 
     @staticmethod
     def dot_product(left, right):
         return left.x * right.x + left.y * right.y
 
     def get_perpendicular(self):
+        """
+        :return: Returns the normal vector.
+        """
         return Vector2(self.y, -self.x)
+
+
+class ShapeProjection:
+    """
+    Projection of 2D polygon into 1D.
+    """
+    def __init__(self, minimum, maximum):
+        """
+        :param minimum: The lower value of the projection on the axis.
+        :param maximum: The upper value of the projection on the axis.
+        """
+        self.minimum = minimum
+        self.maximum = maximum
+
+    def __eq__(self, other):
+        return self.minimum == other.minimum and self.maximum == other.maximum
+
+    def __repr__(self):
+        return "ShapeProjection(Minimum:" + str(self.minimum) + " Maximum: " + str(self.maximum) + ")"
+
+    def overlaps(self, other):
+        """
+        Check for an overlap against another ShapeProjection.
+        :param other: The other ShapeProjection instance to check for an overlap against.
+        :return: A boolean representing whether there is an overlap.
+        """
+        return max(self.minimum, self.maximum) >= min(other.minimum, other.maximum) and \
+               max(other.minimum, other.maximum) >= min(self.minimum, self.maximum)
 
 
 class IntersectResult:
@@ -260,3 +302,9 @@ class IntersectResult:
         """
         self.intersection = intersection
         self.mtv = mtv
+
+    def __repr__(self):
+        return "IntersectResult(Intersection: " + str(self.intersection) + " MTV: " + str(self.mtv) + ")"
+
+    def __eq__(self, other):
+        return self.intersection == other.intersection and self.mtv == other.mtv
