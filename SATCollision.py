@@ -9,6 +9,7 @@ class IntersectTester:
     """
     A class used to test for intersections between shapes represented by lists of vertices.
     """
+    
     def __init__(self, pol1, pol2):
         """
         Spawns an instance of an InterestTester provided the actual shapes to test for.
@@ -35,11 +36,14 @@ class IntersectTester:
         without the test_minor method as there may not even be an intersection between the two shapes
         and now you're running through an entire SAT algorithm to check for an intersection. When used with test_minor,
         it will inform you of the possibility of a current intersection between the two shapes.
-        :return:
+        :return: An IntersectResult containing information on the intersection.
         """
         normals1 = IntersectTester._get_normals_from(self.pol1)
         normals2 = IntersectTester._get_normals_from(self.pol2)
         normals = normals1 + normals2
+
+        overlapAmount = 999999
+        smallestAxis = None
 
         for normal in normals:
             p1 = IntersectTester.projection_from_onto(self.pol1, normal)
@@ -48,10 +52,15 @@ class IntersectTester:
             if not p1.overlaps(p2):
                 # No Intersection. Quit algorithm right away.
                 return IntersectResult(False, None)
+            else:
+                currentOverlapAmount = p1.get_overlap_on(p2)
+                if currentOverlapAmount < overlapAmount:
+                    overlapAmount = currentOverlapAmount
+                    smallestAxis = normal
 
         # If execution gets to this point, the algorithm did not return and thus there is an intersection
         # between the two shapes.
-        return IntersectResult(True, None)
+        return IntersectResult(True, Vector2(smallestAxis.x, smallestAxis.y) * overlapAmount)
 
     def test_full(self):
         """
@@ -63,7 +72,7 @@ class IntersectTester:
         bounds_is_intersecting = self.test_minor()
         if bounds_is_intersecting:
             return self.test_major()
-        return False
+        return IntersectResult(False, None)
 
     @staticmethod
     def _get_normals_from(polygon):
@@ -186,28 +195,25 @@ class Vector2:
         return "(" + str(self.x) + ", " + str(self.y) + ")"
 
     # Operator overloads...
-    # Division
+
     def __truediv__(self, scalar):
         """
         :return: Division between Vector2 and scalar. Vector2(1, 1) / 2.0 = Vector2(0.5, 0.5)
         """
         return Vector2(self.x / scalar, self.y / scalar)
 
-    # Multiplication
     def __mul__(self, scalar):
         """
         :return: Vector2 multiplied by scalar. Vector2(1, 1) * 2 = Vector2(2, 2)
         """
         return Vector2(self.x * scalar, self.y * scalar)
 
-    # Addition
     def __add__(self, other):
         """
         :return: Vector2(2, 2) + Vector2(2, 2) = Vector2(4, 4)
         """
         return Vector2(self.x + other.x, self.y + other.y)
 
-    # Subtraction
     def __sub__(self, other):
         """
         :return: Vector2(5, 5) - Vector2(2, 3) = Vector2(3, 2)
@@ -285,6 +291,12 @@ class ShapeProjection:
         """
         return max(self.minimum, self.maximum) >= min(other.minimum, other.maximum) and \
                max(other.minimum, other.maximum) >= min(self.minimum, self.maximum)
+
+    def get_overlap_on(self, other):
+        """
+        :return: Returns the overlap magnitude of 2 projections on the same axis.
+        """
+        return max(self.maximum, other.maximum) - min(self.minimum, other.minimum)
 
 
 class IntersectResult:

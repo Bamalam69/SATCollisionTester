@@ -30,8 +30,8 @@ class MyTestCase(unittest.TestCase):
         control_shape1 = [(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]
         control_shape2 = [Vector2(tuple_vector[0], tuple_vector[1]) + Vector2(5, 5) for tuple_vector in control_shape1]
         control_shape3 = [vector + Vector2(20, 20) for vector in control_shape2]
-        self.assertEqual(IntersectTester(control_shape2, control_shape1).test_major(), IntersectResult(True, None))
-        self.assertEqual(IntersectTester(control_shape2, control_shape3).test_major(), IntersectResult(False, None))
+        self.assertEqual(IntersectTester(control_shape2, control_shape1).test_major().intersection, True)
+        self.assertEqual(IntersectTester(control_shape2, control_shape3).test_major().intersection, False)
 
     def test_minor(self):
         control_shape1 = [(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]
@@ -44,10 +44,20 @@ class MyTestCase(unittest.TestCase):
     def test_major(self):
         control_shape1 = [(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]
         control_shape2 = [Vector2(tuple_vector[0], tuple_vector[1]) + Vector2(5, 5) for tuple_vector in control_shape1]
-        self.assertEqual(IntersectTester(control_shape1, control_shape2).test_major(), IntersectResult(True, None))
+        self.assertEqual(IntersectTester(control_shape1, control_shape2).test_major().intersection, True)
 
         control_shape3 = [el + Vector2(100, 100) for el in control_shape2]
-        self.assertEqual(IntersectTester(control_shape1, control_shape3).test_major(), IntersectResult(False, None))
+        self.assertEqual(IntersectTester(control_shape1, control_shape3).test_major().intersection, False)
+
+    def test_full(self):
+        control_shape1 = [Vector2.from_tuple(vertex) for vertex in [(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]]
+
+        result = IntersectTester(control_shape1, [vertex + Vector2(5, 5) for vertex in control_shape1]).test_full()
+        self.assertEqual(result.intersection, True)
+
+        self.assertEqual(IntersectTester(control_shape1, [vertex + Vector2(15, 15) for vertex in control_shape1])
+                         .test_full().intersection, False)
+        print(result)
 
 # Could maybe handle a shape as a wrapper, could chain methods like shape.test_major(otherShape)
 
