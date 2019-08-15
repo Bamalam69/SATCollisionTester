@@ -134,6 +134,9 @@ class BoundingBox:
         self.height = height
 
     def __repr__(self):
+        """
+        :rtype: str
+        """
         return "Bounding Box(X: " + str(self.x) + " Y: " + str(self.y) + " Width: " + str(self.width) + \
                " Height: " + str(self.height) + ")"
 
@@ -146,6 +149,7 @@ class BoundingBox:
         :param other: The other bounding box to if intersecting. Will raise a
         TypeError if 'other' is not a BoundingBox.
         :return: A boolean - true for an intersection.
+        :rtype:
         """
         # Type checking to throw an error if the user inputted something other than a BoundingBox
         # otherwise Python will throw it's own vague error.
@@ -192,7 +196,7 @@ class Vector2:
         self.y = y
 
     def __repr__(self):
-        return "(" + str(self.x) + ", " + str(self.y) + ")"
+        return "Vector2(" + str(self.x) + ", " + str(self.y) + ")"
 
     # Operator overloads...
 
