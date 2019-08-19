@@ -2,14 +2,13 @@
 A module for determining whether or
 not an intersection between two convex shapes are occurring.
 """
-from typing import List
 
 
 class IntersectTester:
     """
     A class used to test for intersections between shapes represented by lists of vertices.
     """
-    
+
     def __init__(self, pol1, pol2):
         """
         Spawns an instance of an InterestTester provided the actual shapes to test for.
@@ -46,12 +45,12 @@ class IntersectTester:
         smallestAxis = None
 
         for normal in normals:
-            p1 = IntersectTester.projection_from_onto(self.pol1, normal)
-            p2 = IntersectTester.projection_from_onto(self.pol2, normal)
+            p1 = IntersectTester.projection_of_onto(self.pol1, normal)
+            p2 = IntersectTester.projection_of_onto(self.pol2, normal)
 
             if not p1.overlaps(p2):
                 # No Intersection. Quit algorithm right away.
-                return IntersectResult(False, None)
+                return IntersectResult(False, Vector2(0, 0))
             else:
                 currentOverlapAmount = p1.get_overlap_on(p2)
                 if currentOverlapAmount < overlapAmount:
@@ -64,15 +63,14 @@ class IntersectTester:
 
     def test_full(self):
         """
-        Performs a full test - that is the preliminary bounding box check for performance and the SAT algorithm - on the
-        given polygons inputted when this instance was spawned.
+        Performs a full test - that is the preliminary bounding box check for performance and the SAT algorithm.
         :return: IntersectResult containing information representing whether there is an intersection
         between the two polygons.
         """
         bounds_is_intersecting = self.test_minor()
         if bounds_is_intersecting:
             return self.test_major()
-        return IntersectResult(False, None)
+        return IntersectResult(False, Vector2(0, 0))
 
     @staticmethod
     def _get_normals_from(polygon):
@@ -80,10 +78,10 @@ class IntersectTester:
         :param polygon: The polygon to get edge normals from.
         :return: Retrieves the edge normals of the provided convex polygon.
         """
-        normals: List[Vector2] = []  # List hint...
+        normals = []  # List hint...
         for i in range(len(polygon)):
             vertexVector1 = Vector2.from_tuple(polygon[i])
-            if i + 1 == len(polygon):
+            if i + 1 >= len(polygon):
                 return normals
             else:
                 vertexVector2 = Vector2.from_tuple(polygon[i + 1])
@@ -92,7 +90,7 @@ class IntersectTester:
         return normals
 
     @staticmethod
-    def projection_from_onto(pol1, axis):
+    def projection_of_onto(pol1, axis):
         """
         Makes a Projection of the inputted shape onto the
         provided axis.
@@ -157,9 +155,9 @@ class BoundingBox:
             raise TypeError("Incorrect type for parameter 'other'. Expected a BoundingBox not: " + type(other).__name__)
 
         return self.x < other.x + other.width \
-            and self.x + self.width > other.x \
-            and self.y < other.y + other.height \
-            and self.y + self.height > other.y
+               and self.x + self.width > other.x \
+               and self.y < other.y + other.height \
+               and self.y + self.height > other.y
 
     @staticmethod
     def generate_bounds_from(pol1):
@@ -172,17 +170,19 @@ class BoundingBox:
         max_vec = Vector2(-9999999, -99999999)
         for vertex in pol1:
             vector_vertex = Vector2.from_tuple(vertex)
-            if vector_vertex.x > max_vec.x:
+            if max_vec.x < vector_vertex.x:
                 max_vec.x = vector_vertex.x
-            if vector_vertex.x <= min_vec.x:
+
+            if min_vec.x >= vector_vertex.x:
                 min_vec.x = vector_vertex.x
 
-            if vector_vertex.y > max_vec.y:
+            if max_vec.y < vector_vertex.y:
                 max_vec.y = vector_vertex.y
-            if vector_vertex.y <= min_vec.y:
+
+            if min_vec.y > vector_vertex.y:
                 min_vec.y = vector_vertex.y
 
-        return BoundingBox(min_vec.y, min_vec.y, max_vec.x - min_vec.x, max_vec.y - min_vec.y)
+        return BoundingBox(min_vec.x, min_vec.y, max_vec.x - min_vec.x, max_vec.y - min_vec.y)
 
 
 class Vector2:
@@ -273,6 +273,7 @@ class ShapeProjection:
     """
     Projection of 2D polygon into 1D.
     """
+
     def __init__(self, minimum, maximum):
         """
         :param minimum: The lower value of the projection on the axis.
@@ -309,18 +310,19 @@ class IntersectResult:
     Carries a boolean representing whether or not an intersection is occurring,
     and the MTV - Minimum Translation Vector - for moving the shapes out of each other.
     """
-    def __init__(self, intersection, mtv):
+
+    def __init__(self, intersection: bool, mtv: Vector2):
         """
         Spawns a IntersectResult instance using the provided intersection boolean
         and mtv vector.
         :param intersection:
         :param mtv:
         """
-        self.intersection = intersection
+        self.intersecting = intersection
         self.mtv = mtv
 
     def __repr__(self):
-        return "IntersectResult(Intersection: " + str(self.intersection) + " MTV: " + str(self.mtv) + ")"
+        return "IntersectResult(Intersection: " + str(self.intersecting) + " MTV: " + str(self.mtv) + ")"
 
     def __eq__(self, other):
-        return self.intersection == other.intersection and self.mtv == other.mtv
+        return self.intersecting == other.intersection and self.mtv == other.mtv
