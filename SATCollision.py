@@ -56,10 +56,11 @@ class IntersectTester:
                 if currentOverlapAmount < overlapAmount:
                     overlapAmount = currentOverlapAmount
                     smallestAxis = normal
+                    print("normal == ",normal)
 
         # If execution gets to this point, the algorithm did not return and thus there is an intersection
         # between the two shapes.
-        return IntersectResult(True, Vector2(smallestAxis.x, smallestAxis.y) * overlapAmount)
+        return IntersectResult(True, Vector2(smallestAxis.x, smallestAxis.y).normalized() * overlapAmount)
 
     def test_full(self):
         """
@@ -86,7 +87,7 @@ class IntersectTester:
             else:
                 vertexVector2 = Vector2.from_tuple(polygon[i + 1])
             edge = vertexVector1 - vertexVector2
-            normals.append(edge.get_perpendicular())
+            normals.append(edge.get_perpendicular().normalized())
         return normals
 
     @staticmethod
@@ -233,7 +234,7 @@ class Vector2:
         :return:
         """
         from math import sqrt
-        return sqrt((self.x * self.x) + (self.y + self.y))
+        return sqrt((self.x * self.x) + (self.y * self.y))
 
     def normalized(self):
         """
@@ -301,7 +302,10 @@ class ShapeProjection:
         """
         :return: Returns the overlap magnitude of 2 projections on the same axis.
         """
-        return max(self.maximum, other.maximum) - min(self.minimum, other.minimum)
+        if (self.overlaps(other)):
+            return min(self.maximum, other.maximum) - max(self.minimum, other.minimum)
+        else:
+            return 99999999999999
 
 
 class IntersectResult:
