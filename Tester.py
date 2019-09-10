@@ -50,14 +50,19 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(IntersectTester(control_shape1, control_shape3).test_major().intersecting, False)
 
     def test_full(self):
-        control_shape1 = [Vector2.from_tuple(vertex) for vertex in [(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]]
+        control_shape1 = [Vector2.from_type(vertex) for vertex in [(0, 0), (0, 10), (10, 10), (10, 0), (0, 0)]]
 
-        result = IntersectTester(control_shape1, [vertex + Vector2(5, 5) for vertex in control_shape1]).test_full()
+        result = IntersectTester(control_shape1, [vertex + Vector2(5, 5) for vertex in control_shape1]).test()
         self.assertEqual(result.intersecting, True)
 
         self.assertEqual(IntersectTester(control_shape1, [vertex + Vector2(15, 15) for vertex in control_shape1])
-                         .test_full().intersecting, False)
-        print(result)
+                         .test().intersecting, False)
+
+    def test_vector_from(self):
+        from graphics import Point
+        sample_point = Point(50, 20)
+        control_point = Vector2(50, 20)
+        self.assertEqual(Vector2.from_type(sample_point), control_point)
 
 # Could maybe handle a shape as a wrapper, could chain methods like shape.test_major(otherShape)
 
