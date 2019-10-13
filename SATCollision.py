@@ -1,30 +1,31 @@
 """
-A module for determining whether or
-not an intersection between two convex shapes are occurring.
+A module for determining whether an
+intersection between two convex shapes are occurring.
 """
-
 
 class IntersectTester:
     """
-    A class used to test for intersections between shapes represented by lists of vertices.
+    Used to test for intersections between shapes.
     """
 
     def __init__(self, pol1, pol2):
         """
         Spawns an instance of an InterestTester provided the actual shapes to test for.
         Ensure that both the inputted polygons are not the same.
-        :param pol1: 1 of 2 polygons that a collision will be tested for.
-        :param pol2: 1 of 2 polygons that a collision will be tested for.
+        Args:
+            pol1: 1 of 2 polygons that a collision will be tested for.
+            pol2: 1 of 2 polygons that a collision will be tested for.
         """
         self.pol1 = pol1
         self.pol2 = pol2
 
-    def test_minor(self):
+    def test_minor(self) -> bool:
         """
         Performs only a check against the polygons bounding boxes. May provide inconsistent
         information about the intersection as a single axis-aligned bounding box check
         is not very accurate.
         """
+
         bounds1 = BoundingBox.generate_bounds_from(self.pol1)
         bounds2 = BoundingBox.generate_bounds_from(self.pol2)
         return bounds1.intersects_with(bounds2)
@@ -182,6 +183,11 @@ class BoundingBox:
                and self.x + self.width > other.x \
                and self.y < other.y + other.height \
                and self.y + self.height > other.y
+
+    def corners(self):
+        return [Vector2(self.x, self.y), Vector2(self.x + self.width, self.y),
+                Vector2(self.x + self.width, self.y + self.height), Vector2(self.x, self.y + self.height),
+                Vector2(self.x, self.y)]
 
     def get_center(self):
         return Vector2(self.x + (self.width / 2), self.y + (self.height / 2))
